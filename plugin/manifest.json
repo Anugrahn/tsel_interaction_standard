@@ -1,0 +1,16 @@
+{
+  "name": "TIS v3 · Telkomsel Interaction Standard",
+  "id": "tis-telkomsel-interaction-standard-v2",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": [
+    "figma"
+  ],
+  "networkAccess": {
+    "allowedDomains": [
+      "https://api.anthropic.com"
+    ],
+    "reasoning": "AKSA memanggil Claude untuk analisa semantik yang tidak bisa dilakukan rule deterministik."
+  }
+}

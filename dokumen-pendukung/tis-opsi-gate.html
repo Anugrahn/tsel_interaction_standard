@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TIS · Empat cara menghitung gate aksesibilitas</title>
+<style>
+:root{
+  --bg:#f4f4f2; --paper:#fff; --ink:#1b1b1d; --mut:#5f5f66; --mut2:#93939b;
+  --line:#e0e0dd; --line2:#cfcfcb; --fill:#f7f7f5;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,sans-serif;
+  --mono:ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+  font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1060px;margin:0 auto;padding:36px 20px 90px}
+
+h1{font-size:27px;line-height:1.24;margin:0 0 8px;letter-spacing:-.02em}
+.lede{font-size:15.5px;color:var(--mut);margin:0 0 6px;max-width:70ch}
+h2{font-size:19px;margin:40px 0 4px;letter-spacing:-.015em}
+h2 .n{font-family:var(--mono);font-size:12px;color:var(--mut2);display:block;
+  letter-spacing:.08em;margin-bottom:4px;font-weight:700}
+.sub{font-size:14px;color:var(--mut);margin:0 0 16px;max-width:72ch}
+p{margin:0 0 12px}
+
+.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin:14px 0}
+.plain{background:var(--fill);border:1px dashed var(--line2);border-radius:10px;padding:14px 17px;margin:14px 0;font-size:14px;color:var(--mut)}
+.plain b{color:var(--ink)}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--paper)}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+thead th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut2);
+  font-weight:700;border-bottom:1.5px solid var(--line2);background:var(--fill)}
+thead th.opt{border-left:1px solid var(--line)}
+td.opt{border-left:1px solid var(--line);text-align:center;white-space:nowrap}
+tbody tr:hover{background:#fafaf8}
+td.nm{font-weight:600;width:210px}
+td.nm small{display:block;font-weight:400;color:var(--mut2);font-size:12px;line-height:1.45;margin-top:1px}
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:14px 0}
+
+input[type=number]{width:46px;font:600 13px var(--mono);text-align:center;padding:4px 2px;
+  border:1px solid var(--line2);border-radius:6px;background:var(--paper);color:var(--ink)}
+input[type=number]:focus{outline:2px solid var(--ink);outline-offset:-1px}
+
+.v{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;
+  padding:3px 9px;border-radius:5px;border:1px solid}
+.v.pass{background:var(--paper);color:var(--mut);border-color:var(--line2)}
+.v.block{background:var(--ink);color:#fff;border-color:var(--ink)}
+.sc{display:block;font-family:var(--mono);font-size:10.5px;color:var(--mut2);margin-top:3px}
+
+.tot{font-size:12.5px;color:var(--mut);padding:9px 10px;border-left:1px solid var(--line);text-align:center}
+tfoot td{background:var(--fill);border-bottom:0;border-top:1.5px solid var(--line2)}
+
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+@media(max-width:760px){.opts{grid-template-columns:1fr}}
+.opt-card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.opt-card.pick{border:1.5px solid var(--ink)}
+.opt-card h3{margin:0 0 2px;font-size:15.5px}
+.opt-card .rule{font-family:var(--mono);font-size:11.5px;color:var(--mut);background:var(--fill);
+  padding:6px 9px;border-radius:6px;margin:8px 0 12px;line-height:1.5}
+.opt-card .tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--mut2);border:1px solid var(--line2);
+  border-radius:4px;padding:1px 6px;vertical-align:2px;margin-left:6px}
+dl{margin:0}
+dt{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--mut2);margin-top:11px}
+dt:first-child{margin-top:0}
+dd{margin:3px 0 0}
+dd ul{margin:0;padding-left:17px}
+dd li{font-size:13.5px;line-height:1.6;color:var(--mut);margin-bottom:4px}
+dd li b{color:var(--ink);font-weight:600}
+
+.audit{background:var(--ink);color:#e8e8ec;border-radius:12px;padding:22px 24px;margin:36px 0 0}
+.audit h3{color:#fff;margin:0 0 12px;font-size:16px}
+.audit dl{margin:0}
+.audit dt{color:#9c9ca6;margin-top:13px}
+.audit dd{color:#d2d2d8;font-size:13.5px;line-height:1.62}
+.audit .warnrow{border-top:1px solid #34343c;margin-top:16px;padding-top:14px;font-size:13.5px;color:#c9c9d0}
+.audit .warnrow b{color:#fff}
+
+.reset{border:1px solid var(--line2);background:var(--paper);color:var(--mut);
+  font:600 12px var(--sans);padding:6px 12px;border-radius:7px;cursor:pointer}
+.reset:hover{border-color:var(--ink);color:var(--ink)}
+.bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0 0}
+.hint{font-size:12.5px;color:var(--mut2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Empat cara menghitung gate aksesibilitas</h1>
+<p class="lede">Catatan pertimbangan, keputusannya sudah diambil. Angka di tabel bisa kamu ubah sendiri untuk melihat apakah keputusannya berubah.</p>
+
+<div class="card" style="border-left:4px solid var(--ink)">
+<p style="margin:0 0 6px;font-weight:700">Sudah diputuskan, 26 Agustus 2026: tetap seperti sekarang.</p>
+<p style="margin:0;font-size:14px;color:var(--mut)">Alasannya, bucket potensi menampung temuan "kontras belum bisa dipastikan" yang muncul saat latar berblur, transparan, atau berupa gambar. Selama titik buta itu masih ada, menolkan bobot potensi justru membuat layar glass dan overlay paling gampang lolos. Halaman ini disimpan sebagai catatan pertimbangan, bukan pilihan yang masih terbuka. Yang belum diputuskan cuma satu: apakah pelanggaran WCAG dibuat nol-toleransi tanpa mengubah bobot potensi.</p>
+</div>
+
+<h2><span class="n">Duduk perkaranya</span>Rumus sekarang lembek di sisi yang pasti, galak di sisi yang belum pasti</h2>
+<p class="sub">Skor satu layar dihitung dari bobot temuan, lalu dibandingkan dengan ambang 80. Pelanggaran WCAG berbobot 5, potensi berbobot 1. Karena rumusnya melengkung, tambahan pelanggaran makin lama makin tidak terasa, sementara potensi yang jumlahnya bisa puluhan justru menumpuk.</p>
+
+<div class="plain">
+<b>Bahasa awam:</b> bayangkan nilai rapor yang dihitung pakai rumus yang makin ke bawah makin susah turun. Lima nilai merah masih bisa dapat 80. Tapi dua puluh enam catatan kecil, yang bahkan bukan nilai merah, malah menjatuhkan nilainya ke 79.
+</div>
+
+<h2><span class="n">Uji ke kasus</span>Tujuh profil layar, empat aturan, satu tabel</h2>
+<p class="sub">Angka pelanggaran dan potensi di bawah adalah profil rekaan yang disusun agar mewakili jenis layar yang benar-benar kita temui, bukan hasil pemindaian sungguhan. Ubah angkanya untuk menguji sendiri.</p>
+
+<div class="tblwrap">
+<table id="tbl">
+<thead>
+  <tr>
+    <th>Profil layar</th>
+    <th style="width:74px">Pelanggaran</th>
+    <th style="width:66px">Potensi</th>
+    <th class="opt">Sekarang</th>
+    <th class="opt">A · Pisah total</th>
+    <th class="opt">B · Nol-toleransi</th>
+    <th class="opt">C · Ambang 90</th>
+  </tr>
+</thead>
+<tbody></tbody>
+<tfoot>
+  <tr>
+    <td colspan="3" style="font-weight:600;font-size:12.5px">Berapa layar yang tertahan</td>
+    <td class="tot" id="t0"></td><td class="tot" id="t1"></td>
+    <td class="tot" id="t2"></td><td class="tot" id="t3"></td>
+  </tr>
+</tfoot>
+</table>
+</div>
+
+<div class="bar">
+  <button class="reset" id="reset">Kembalikan ke angka awal</button>
+  <span class="hint">Pelanggaran = kegagalan WCAG yang pasti. Potensi = perlu dicek manusia.</span>
+</div>
+
+<h2><span class="n">Untung ruginya</span>Empat pilihan, apa adanya</h2>
+
+<div class="opts">
+
+  <div class="opt-card pick">
+    <h3>Sekarang <span class="tag">dipilih</span></h3>
+    <div class="rule">lolos kalau skor &ge; 80<br>pelanggaran &times;5 &nbsp; potensi &times;1</div>
+    <dl>
+      <dt>Untungnya</dt>
+      <dd><ul>
+        <li>Tidak perlu mengubah apa pun.</li>
+        <li>Satu angka saja yang perlu dijelaskan ke stakeholder.</li>
+      </ul></dd>
+      <dt>Ruginya</dt>
+      <dd><ul>
+        <li><b>Lima kegagalan WCAG masih lolos.</b> Ini yang paling sulit dipertahankan kalau ditanya auditor.</li>
+        <li>Layar padat bisa tertahan gara-gara puluhan catatan yang bahkan bukan pelanggaran.</li>
+        <li>Bertentangan dengan trust ladder: yang pasti seharusnya menahan, yang belum pasti seharusnya menasihati.</li>
+      </ul></dd>
+      <dt>Kenapa tetap dipilih</dt>
+      <dd><ul>
+        <li>Bobot potensi menahan kasus <b>kontras belum bisa dipastikan</b>, yaitu latar berblur, transparan, dan gambar. Selama pemeriksa belum sanggup memutuskan kasus itu, menolkan bobotnya membuat layar paling berisiko jadi paling gampang lolos.</li>
+      </ul></dd>
+    </dl>
+  </div>
+
+  <div class="opt-card">
+    <h3>A · Pisah total <span class="tag">tidak dipilih</span></h3>
+    <div class="rule">lolos kalau pelanggaran = 0<br>potensi tidak ikut hitung gate</div>
+    <dl>
+      <dt>Untungnya</dt>
+      <dd><ul>
+        <li><b>Persis mengikuti trust ladder.</b> Yang menahan rilis cuma sinyal deterministik yang pasti.</li>
+        <li>Aturannya bisa dijelaskan dalam satu kalimat, tanpa menyebut rumus.</li>
+        <li>Skor tetap ada dan tetap tampil, cuma tidak lagi jadi penentu.</li>
+        <li>Ambang 80 yang selama ini tebakan tidak perlu dibela lagi.</li>
+      </ul></dd>
+      <dt>Ruginya</dt>
+      <dd><ul>
+        <li>Paling ketat. Satu kontras yang jatuh sudah cukup menahan.</li>
+        <li>Banyak layar lama akan langsung merah begitu aturan ini menyala.</li>
+        <li>Kalau scanner salah vonis, dampaknya langsung, jadi jalur sanggah manusia wajib rapi dulu.</li>
+      </ul></dd>
+    </dl>
+  </div>
+
+  <div class="opt-card">
+    <h3>B · Nol-toleransi + skor</h3>
+    <div class="rule">lolos kalau pelanggaran = 0<br>DAN skor &ge; 80</div>
+    <dl>
+      <dt>Untungnya</dt>
+      <dd><ul>
+        <li>Menutup lubang lima pelanggaran, sama seperti A.</li>
+        <li>Masih menahan layar yang catatannya menumpuk sangat banyak.</li>
+      </ul></dd>
+      <dt>Ruginya</dt>
+      <dd><ul>
+        <li><b>Paling ketat dari semuanya</b>, karena dua syarat harus dipenuhi sekaligus.</li>
+        <li>Masih membawa ambang 80 yang tidak punya dasar.</li>
+        <li>Ketika tertahan, desainer harus membaca dua alasan yang berbeda jenisnya.</li>
+      </ul></dd>
+    </dl>
+  </div>
+
+  <div class="opt-card">
+    <h3>C · Ambang 90, potensi dinolkan</h3>
+    <div class="rule">lolos kalau skor &ge; 90<br>potensi tidak ikut hitung</div>
+    <dl>
+      <dt>Untungnya</dt>
+      <dd><ul>
+        <li>Perubahan paling kecil, cuma dua angka.</li>
+        <li>Potensi berhenti menahan rilis, jadi layar padat tidak dihukum.</li>
+        <li>Masih memberi ruang satu pelanggaran, jadi tidak mengejutkan tim.</li>
+      </ul></dd>
+      <dt>Ruginya</dt>
+      <dd><ul>
+        <li><b>Masih memaafkan satu kegagalan WCAG.</b> Sulit dijelaskan kalau yang lolos itu kontras yang tidak terbaca.</li>
+        <li>Ambang 90 tetap angka tebakan, cuma tebakan yang berbeda.</li>
+        <li>Menunda keputusan, tidak menyelesaikannya.</li>
+      </ul></dd>
+    </dl>
+  </div>
+
+</div>
+
+<h2><span class="n">Sebelum memutuskan</span>Tiga hal yang perlu dipastikan dulu</h2>
+<div class="card">
+<dl>
+  <dt>Satu</dt>
+  <dd>Profil layar di tabel ini rekaan. Sebelum aturannya dikunci, pindai lima layar sungguhan yang mewakili, lalu masukkan angka aslinya ke tabel yang sama. Kalau urutan untung ruginya berubah, keputusannya ikut berubah.</dd>
+  <dt>Dua</dt>
+  <dd>Opsi A membuat vonis scanner langsung menahan rilis. Artinya jalur sanggah manusia harus rapi lebih dulu: siapa yang berhak menyanggah, di mana alasannya dicatat, dan apakah sanggahan itu ikut masuk snapshot.</dd>
+  <dt>Tiga</dt>
+  <dd>Ketiga opsi hanya menyentuh sisi aksesibilitas. Sisi journey tetap memakai aturan lama, yaitu tertahan kalau statusnya broken. Itu belum kita bahas dan sebaiknya dibahas terpisah.</dd>
+</dl>
+</div>
+
+<div class="audit">
+  <h3>Panel audit</h3>
+  <dl>
+    <dt>Hierarki visual</dt>
+    <dd>Satu elemen dominan per bagian: tabel di bagian uji, kartu di bagian untung rugi. Skala huruf dibedakan tegas antara judul bagian, judul kartu, dan isi. Blok sejajar dijaga maksimal empat, yaitu empat kartu opsi.</dd>
+    <dt>Kejelasan label</dt>
+    <dd>Istilah sistem dihindari di permukaan. Rumus tetap ditampilkan tapi ditaruh sebagai caption kecil di dalam kartu, bukan sebagai label utama. Kata pelanggaran dan potensi dijelaskan di baris bantuan di bawah tabel.</dd>
+    <dt>Beban kognitif</dt>
+    <dd>Satu keputusan saja di halaman ini, yaitu memilih aturan gate. Tabel dan kartu dipisah supaya membandingkan angka dan menimbang alasan tidak terjadi bersamaan.</dd>
+    <dt>Konsistensi</dt>
+    <dd>Urutan keempat opsi sama persis di tabel dan di kartu. Vonis selalu memakai dua kata yang sama, lolos dan tertahan. Skor selalu di bawah vonis, tidak pernah di sampingnya.</dd>
+    <dt>Penonjolan aksi</dt>
+    <dd>Halaman ini tidak punya aksi utama karena keputusannya diambil di luar halaman. Kartu opsi A diberi garis tebal sebagai penanda saran, bukan sebagai tombol. Vonis tertahan diberi blok gelap supaya lebih menarik mata daripada vonis lolos, karena yang perlu diperiksa memang yang tertahan.</dd>
+    <dt>Alur baca</dt>
+    <dd>Urutannya duduk perkara, lalu bukti, lalu untung rugi, lalu syarat sebelum memutuskan. Angka muncul sebelum penilaian, supaya penilaiannya bisa diperiksa terhadap angkanya.</dd>
+  </dl>
+  <div class="warnrow">
+    <b>Melanggar dengan sengaja.</b> Standar meminta gaya lo-fi tanpa warna merek, dan itu dipatuhi, semuanya abu-abu. Tapi standar juga meminta wireframe layar produk, sedangkan ini alat bantu keputusan. Panel anotasi karena itu diletakkan sebagai bagian halaman, bukan di samping layar.
+  </div>
+</div>
+
+</div>
+
+<script>
+var AWAL = [
+  ["Login / OTP","elemen sedikit, tata letaknya lapang",0,3],
+  ["Detail paket","satu label harga di kartu gradient kontrasnya jatuh",1,8],
+  ["Dashboard IndiHome","padat, 39 teks, banyak 11px dan ikon 32px",2,24],
+  ["Layar glass / overlay","banyak transparansi, kontras belum bisa dipastikan",0,18],
+  ["Toolbar mitra","6 ikon tanpa teks, 4 di antaranya nama layer generik",4,6],
+  ["Layar yang memang buruk","kontras jatuh di banyak tempat, area tap kecil",5,4],
+  ["Form pengaduan","keterangan pakai teks 11px, sisanya rapi",0,26]
+];
+var data = AWAL.map(function(r){ return r.slice(); });
+
+function skor(v,p){ var W=v*5+p*1; return Math.round(100*(1-W/(W+100))); }
+function vonis(v,p){
+  var s=skor(v,p);
+  return [ s>=80, v===0, (v===0 && s>=80), Math.round(100*(1-(v*5)/(v*5+100)))>=90 ];
+}
+function sel(lolos,s){
+  return '<span class="v '+(lolos?'pass':'block')+'">'+(lolos?'lolos':'tertahan')+'</span>'+
+         '<span class="sc">skor '+s+'</span>';
+}
+function gambar(){
+  var tb=document.querySelector("#tbl tbody"), h="", tot=[0,0,0,0];
+  data.forEach(function(r,i){
+    var v=r[2], p=r[3], s=skor(v,p), V=vonis(v,p);
+    V.forEach(function(ok,k){ if(!ok) tot[k]++; });
+    h+='<tr><td class="nm">'+r[0]+'<small>'+r[1]+'</small></td>'+
+       '<td><input type="number" min="0" max="99" value="'+v+'" data-i="'+i+'" data-f="2"></td>'+
+       '<td><input type="number" min="0" max="99" value="'+p+'" data-i="'+i+'" data-f="3"></td>'+
+       V.map(function(ok){ return '<td class="opt">'+sel(ok,s)+'</td>'; }).join("")+
+       '</tr>';
+  });
+  tb.innerHTML=h;
+  for(var k=0;k<4;k++) document.getElementById("t"+k).textContent = tot[k]+" dari "+data.length;
+}
+document.addEventListener("input",function(e){
+  var el=e.target; if(el.tagName!=="INPUT") return;
+  var n=parseInt(el.value,10); if(isNaN(n)||n<0) n=0; if(n>99) n=99;
+  data[+el.dataset.i][+el.dataset.f]=n;
+  var pos=[].indexOf.call(el.parentNode.parentNode.parentNode.querySelectorAll("input"),el);
+  gambar();
+  var again=document.querySelectorAll("#tbl tbody input")[pos];
+  if(again){ again.focus(); again.select(); }
+});
+document.getElementById("reset").addEventListener("click",function(){
+  data = AWAL.map(function(r){ return r.slice(); }); gambar();
+});
+gambar();
+</script>
+</body>
+</html>
