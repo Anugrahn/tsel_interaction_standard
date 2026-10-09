@@ -50,6 +50,45 @@ TIS adalah agen tahap **desain** dalam AI SDLC Telkomsel: CELIA (requirement), *
 
 ---
 
+## AKSA, AI di dalam TIS
+
+**AKSA** (*Accessibility Knowledge & Scoring Assistant*) adalah reviewer AI di dalam TIS. Tugasnya menangkap hal yang tidak bisa ditangkap aturan pasti: makna label, hierarki visual, beban kognitif, jargon, dan apakah orang sungguhan bisa menyelesaikan task. Prinsipnya: **AKSA menyarankan, tidak mengubah desain, dan keputusan akhir tetap di manusia.**
+
+### Pembagian kerja dengan scanner
+
+| | Scanner deterministik (`code.js`) | AKSA (`ui.html`) |
+|---|---|---|
+| Menilai | kontras, ukuran teks, area tap, label tombol, urutan fokus | makna, hierarki, kejelasan label, alur, perilaku pengguna |
+| Sifat | pasti, hasilnya sama setiap kali | penilaian, diberi tingkat keyakinan |
+| Boleh menahan rilis | ya (skor aksesibilitas) | tidak, advisory sampai terbukti sepakat dengan manusia |
+| Angka teknis (px, rasio kontras) | ya | **dilarang**, itu wilayah scanner |
+
+### Lima tugas AKSA
+
+| Tugas | Prompt | Model | Keluaran |
+|---|---|---|---|
+| Analisa satu layar | `SYS` | Opus | rubrik usability 6 dimensi berbasis Nielsen + temuan aksesibilitas kontekstual, tiap temuan dengan saran konkret |
+| Insight journey | `FLOW_SYS` | Opus | penilaian alur: efisiensi, progres, konsistensi, kontrol, pencegahan error |
+| Task Walkthrough | `TW_SYS` | Sonnet × 5 run | AKSA jadi pengguna awam; vonis berhasil / rapuh / gagal / nyasar per run → PASS / BROKEN |
+| Sintesis lintas run | `SYNTH_SYS` | Opus | titik putus, akar masalah, profil terdampak, perbaikan berurut blocker → friksi → polish |
+| UT persona *(v3)* | `PERSONA_SYS` | Sonnet, satu panggilan per langkah | jejak tiap persona × kendala, tingkat sampai, rasio mundur, titik gagal |
+
+Kalau token belum punya akses Opus, panggilan Opus otomatis turun ke Sonnet dan UI memberi tahu.
+
+### Kenapa hasil AKSA bisa dipercaya
+
+- **Dikalibrasi dari kesalahan nyata.** 41 aturan di `KNOWLEDGE`, masing-masing lahir dari false positive atau vonis keliru yang benar-benar terjadi. Ada empat jenis: *menahan* (rem dari tuduhan berlebih), *deteksi* (kacamata untuk yang mudah terlewat), *atribusi* (siapa yang dirugikan), dan *ambang* (kapan layak dilaporkan). Katalognya di [`plugin/KALIBRASI.md`](plugin/KALIBRASI.md), alasannya di [`dokumen-pendukung/aksa-calibration-notes.md`](dokumen-pendukung/aksa-calibration-notes.md).
+- **Aturan tidak bisa lepas diam-diam.** Integrity checker memeriksa setiap aturan masih ada di prompt yang benar-benar dikirim. Lencana 🧠 Knowledge berubah merah kalau ada yang lepas.
+- **Presisi di atas recall.** Lebih baik AKSA diam saat ragu daripada menuduh. Satu tuduhan ngawur membuat desainer berhenti percaya.
+- **Mengakui kalau tidak tahu.** Kontras di atas gambar atau blur ditandai "perlu cek manusia", bukan divonis.
+- **Grounded.** AKSA wajib mengutip teks persis dari layar dan dilarang mengarang tombol, paket, atau layar.
+- **Aturan penting ditegakkan kode, bukan dipercayakan ke model.** Contohnya: langkah menebak berarti gagal, langkah ragu membuat vonis paling tinggi rapuh, dan variasi jalur dihitung dari data run.
+- **Trust ladder.** Vonis AI advisory → konfirmasi manusia → gate bertahap, hanya untuk kategori yang kesepakatannya dengan manusia sudah terbukti (Cohen's kappa ≥ 0,7).
+
+Token Claude dimasukkan tiap pengguna dan disimpan lokal. Untuk produksi, panggilan sebaiknya lewat proxy backend Telkomsel (lihat `plugin/HANDOFF-ENGINEER.md` §6).
+
+---
+
 ## Yang baru di versi 3: UT persona
 
 Task Walkthrough versi sebelumnya memberi AI semua layar dan peta alur sekaligus. Akibatnya AI hampir tidak pernah tersesat, karena dia memegang kunci jawabannya. Versi 3 menambahkan mode **👥 Persona** yang mengubah **apa yang dilihat AI**, bukan sekadar instruksinya.
